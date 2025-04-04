@@ -1,0 +1,34 @@
+# Basic GitLab configuration generated from template
+
+## GitLab URL
+##! Can be specified by providing host over http or https protocol.
+##! Check https://docs.gitlab.com/omnibus/settings/configuration.html#configuring-the-external-url-for-gitlab
+external_url '{{ gitlab_external_url }}'
+
+## Timezone
+gitlab_rails['time_zone'] = '{{ gitlab_timezone | default("UTC") }}'
+
+## Email Settings
+gitlab_rails['gitlab_email_enabled'] = {{ gitlab_email_enabled | lower }}
+{% if gitlab_email_enabled %}
+gitlab_rails['gitlab_email_from'] = '{{ gitlab_email_from }}'
+gitlab_rails['gitlab_email_display_name'] = '{{ gitlab_email_display_name | default("GitLab") }}'
+# Add more email settings if needed (SMTP etc.) based on variables
+{% endif %}
+
+## Unicorn Workers (Example of numeric value)
+unicorn['worker_processes'] = {{ unicorn_workers | default(3) }}
+
+## Backup Settings (Example of boolean)
+gitlab_rails['manage_backup_path'] = true
+gitlab_rails['backup_path'] = "/var/opt/gitlab/backups"
+gitlab_rails['backup_keep_time'] = {{ backup_keep_time_seconds | default(604800) }} # Default: 7 days
+
+# Add other settings as needed, referencing variables from your YAML file
+# e.g., LDAP, Mattermost, Prometheus, etc.
+# registry_external_url '...'
+
+{% if custom_settings is defined %}
+# Include custom settings block if defined in variables
+{{ custom_settings }}
+{% endif %}

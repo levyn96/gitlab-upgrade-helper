@@ -1,0 +1,14 @@
+gitlab_external_url: 'https://gitlab.example.com'
+gitlab_timezone: 'Europe/Berlin'
+
+gitlab_email_enabled: true
+gitlab_email_from: 'gitlab@example.com'
+gitlab_email_display_name: 'My GitLab Instance'
+
+unicorn_workers: 4
+backup_keep_time_seconds: 1209600 # 14 days
+
+# Example of embedding a raw block of configuration
+custom_settings: |
+  # Custom Nginx settings example
+  # nginx['custom_gitlab_server_config'] = "location ^~ /foo-bar/ { deny all; }\\n"

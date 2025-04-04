@@ -1,7 +1,7 @@
 # In your main CLI file, e.g., cli.py or gitlab_helper_cli.py
 
 import click
-from src.gitlab_upgrade_helper.config import modify_gitlab_rb_setting # Assuming the function is in this path
+from src.gitlab_upgrade_helper.config import modify_gitlab_rb_setting, apply_gitlab_rb_template # Assuming the function is in this path
 
 @click.group()
 def cli():
@@ -46,6 +46,46 @@ def set_config(host, key_file, setting, value, user, port, backup, reconfigure):
         ctx = click.get_current_context()
         ctx.exit(1)
 
+@cli.command("apply-template")
+@click.option('--host', required=True, help='IP address or hostname of the GitLab server.')
+@click.option('--key-file', required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True), help='Path to the SSH private key (PEM) file.')
+@click.option('--template', required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True), help='Path to the Jinja2 template file for gitlab.rb.')
+@click.option('--vars', required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True), help='Path to the YAML file with variables for the template.')
+@click.option('--user', default='root', show_default=True, help='SSH username.')
+@click.option('--port', default=22, show_default=True, help='SSH port.')
+@click.option('--backup/--no-backup', default=True, show_default=True, help='Create a backup before replacing gitlab.rb.')
+@click.option('--reconfigure/--no-reconfigure', default=False, show_default=True, help="Run 'gitlab-ctl reconfigure' after applying the template.")
+def apply_template_cmd(host, key_file, template, vars, user, port, backup, reconfigure):
+    """
+    Applies a Jinja2 template to generate and replace /etc/gitlab/gitlab.rb.
+    
+    Example:
+
+    poetry run gitlab-helper apply-template --host 1.2.3.4 \\
+        --key-file ~/.ssh/id_rsa \\
+        --template templates/gitlab.rb.j2 \\
+        --vars config/production.yaml \\
+        --reconfigure
+    """
+    click.echo(f"Attempting to apply template '{template}' with vars '{vars}' to {host}...")
+    
+    success = apply_gitlab_rb_template(
+        host=host,
+        key_filename=key_file,
+        template_file=template,
+        vars_file=vars,
+        ssh_user=user,
+        ssh_port=port,
+        create_backup=backup,
+        run_reconfigure=reconfigure,
+    )
+
+    if success:
+        click.secho("Operation completed successfully.", fg='green')
+    else:
+        click.secho("Operation failed. Check logs for details.", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
 
 if __name__ == '__main__':
     cli()
