@@ -91,22 +91,53 @@ poetry run gitlab-helper set-config \
     --value "4" \
     --no-reconfigure
 ```
-apply-template Command
-Applies a Jinja2 template to generate the entire /etc/gitlab/gitlab.rb content and replaces the remote file. This is the recommended method for managing the full configuration robustly.
+### `apply-template` Command
 
-Arguments
---host TEXT: (Required) IP address or hostname of the GitLab server.
---key-file PATH: (Required) Path to the SSH private key (PEM) file.
---template PATH: (Required) Path to the Jinja2 template file (e.g., templates/gitlab.rb.j2).
---vars PATH: (Required) Path to the YAML file with variables for the template (e.g., config/production.yaml).
---user TEXT: SSH username (Default: root).
---port INTEGER: SSH port (Default: 22).
---backup / --no-backup: Create a backup before replacing gitlab.rb (Default: --backup).
---reconfigure / --no-reconfigure: Run 'gitlab-ctl reconfigure' after applying the template (Default: --no-reconfigure).
-Template and Variables Files
-This command relies on two input files:
+Applies a Jinja2 template to generate the *entire* `/etc/gitlab/gitlab.rb` content and replaces the remote file, OR renders the template locally to stdout for preview. This is the recommended method for managing the full configuration robustly.
 
-Template (--template): A standard Jinja2 template file (conventionally ending in .j2). You define your desired gitlab.rb structure here, using Jinja2 variables, loops, conditionals, etc.
+#### Arguments
+
+* `--host TEXT`: IP address or hostname (Required unless `--render-only`).
+* `--key-file PATH`: Path to the SSH private key (PEM) file (Required unless `--render-only`).
+* `--template PATH`: (Required) Path to the Jinja2 template file.
+* `--vars PATH`: (Required) Path to the YAML file with variables.
+* `--render-only`: (Flag) Render template locally and print to stdout; skip remote connection and actions.
+* `--user TEXT`: SSH username (Default: `root`, Ignored if `--render-only`).
+* `--port INTEGER`: SSH port (Default: `22`, Ignored if `--render-only`).
+* `--backup` / `--no-backup`: Create backup before replacing (Default: `--backup`, Ignored if `--render-only`).
+* `--reconfigure` / `--no-reconfigure`: Run 'gitlab-ctl reconfigure' after applying (Default: `--no-reconfigure`, Ignored if `--render-only`).
+
+#### Template and Variables Files
+
+(Keep the existing explanation and examples for template and vars files here)
+* *Example (`templates/gitlab.rb.j2` snippet):* ...
+* *Example (`config/production.yaml` snippet):* ...
+
+#### Examples
+
+```bash
+# Apply production configuration remotely and reconfigure
+poetry run gitlab-helper apply-template \
+    --host gitlab.prod.internal \
+    --key-file ~/.ssh/id_rsa_prod \
+    --template templates/base_gitlab.rb.j2 \
+    --vars config/prod_vars.yaml \
+    --backup \
+    --reconfigure
+
+# Render the template locally using staging variables and print to screen
+poetry run gitlab-helper apply-template \
+    --template templates/base_gitlab.rb.j2 \
+    --vars config/staging_vars.yaml \
+    --render-only
+
+# Apply staging configuration remotely without running reconfigure
+poetry run gitlab-helper apply-template \
+    --host gitlab.staging.internal \
+    --key-file ~/.ssh/id_rsa_staging \
+    --template templates/base_gitlab.rb.j2 \
+    --vars config/staging_vars.yaml \
+    --no-reconfigure
 
 Example (templates/gitlab.rb.j2 snippet):
 
